@@ -5,5 +5,5 @@ members = [
     "crates/xforge-build",
     "crates/xforge-pack",
     "crates/xforge-publish",
-    "crates/xforge-cli",
+    "crates/xforge-cli", "tmp/xforge-init-smoke-1771832540", "tmp/xforge-init-smoke-1771833016",
 ]

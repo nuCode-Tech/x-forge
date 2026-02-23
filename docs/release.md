@@ -21,6 +21,22 @@ XForge produces signed manifests, deterministic build hashes, and platform artif
 
 ## Release checklist
 
+### 0. Initialize project config
+
+Run `xforge init` to scaffold `rust-toolchain.toml`, `.cargo/config.toml` with Android linker mappings, and helper scripts. Validate with `--check` before proceeding.
+
+```bash
+xforge init --manifest-dir .
+xforge init --manifest-dir . --check
+```
+
+Ensure your crate produces shared libraries by adding to `Cargo.toml`:
+
+```toml
+[lib]
+crate-type = ["cdylib"]
+```
+
 ### 1. Configure `xforge.yaml` and `rust-toolchain.toml`
 
 Add a `precompiled_binaries` block next to `Cargo.toml` and ensure `rust-toolchain.toml` declares the targets/components.
@@ -38,6 +54,9 @@ precompiled_binaries:
 channel = "stable"
 targets = ["x86_64-unknown-linux-gnu", "aarch64-apple-darwin"]
 components = ["rustfmt", "clippy"]
+
+[lib]
+crate-type = ["cdylib"]
 ```
 
 - `repository` is required and normalized to `owner/repo` (GitHub/GitHub-compatible hosts).
@@ -45,6 +64,7 @@ components = ["rustfmt", "clippy"]
 - `url_prefix` overrides the GitHub download path when you host artifacts elsewhere.
 - `mode` controls adapter fallbacks (`auto`, `always`/`download`, `never`/`build`/`off`).
 - `toolchain.targets` tells the CLI which Rust triples to build. See `docs/configuring-targets.md` for the full schema and valid triples.
+- `[lib] crate-type = ["cdylib"]` ensures shared libraries are built for bundling.
 
 ### 2. Build each target
 
@@ -126,7 +146,7 @@ jobs:
             --assets-dir ./crate/dist
 ```
 
-This example builds on Ubuntu and reuses the `xforge-cli` workspace binary. Adjust the matrix (`macos-latest`, `windows-latest`) and pass `--android-ndk-version`/`--android-sdk-location` if you need Android archives.
+This example builds on Ubuntu and reuses the `xforge-cli` workspace binary. Adjust the matrix (`macos-latest`, `windows-latest`) and include Android targets in `rust-toolchain.toml` when you need Android archives.
 
 ## Android targets
 
@@ -140,19 +160,15 @@ unzip tools.zip -d $HOME/android-sdk/cmdline-tools
 yes | $HOME/android-sdk/cmdline-tools/tools/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "ndk;24.0.8215888"
 ```
 
-Then invoke `xforge bundle` with the SDK/NDK flags:
+Initialize linker wrappers once:
 
 ```bash
-cargo run -p xforge-cli -- bundle \
-  --manifest-dir . \
-  --output-dir dist \
-  --profile release \
-  --android-sdk-location "$ANDROID_SDK_ROOT" \
-  --android-ndk-version 24.0.8215888 \
-  --android-min-sdk-version 23
+cargo run -p xforge-cli -- init --manifest-dir .
 ```
 
-`bundle` will still look for the built libraries under `target/<triple>/release`, so build them ahead of time (for example, with `cargo build --target=aarch64-linux-android`).
+This creates `.cargo/config.toml` and `scripts/xforge-android-linker.sh` wrappers that auto-detect NDK locations (`XFORGE_ANDROID_NDK`, `ANDROID_NDK_HOME`, `ANDROID_SDK_ROOT`) and use `XFORGE_ANDROID_API` (default `23`) for Clang selection.
+
+Then build Android targets normally (for example, `cargo build --target=aarch64-linux-android`) before running `xforge bundle`. `bundle` still reads built libraries from `target/<triple>/<profile>`.
 
 ## Troubleshooting
 

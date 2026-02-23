@@ -13,6 +13,18 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Initialize XForge config for a Rust crate or Dart plugin.
+    Init {
+        /// Directory to initialize.
+        #[arg(long, default_value = ".")]
+        manifest_dir: PathBuf,
+        /// Overwrite files if they already exist.
+        #[arg(long)]
+        force: bool,
+        /// Validate configuration and linker setup without writing files.
+        #[arg(long)]
+        check: bool,
+    },
     /// Build the crate for a single target.
     Build {
         /// Manifest directory containing Cargo.toml.
@@ -101,6 +113,28 @@ fn main() {
 fn run_cli() -> Result<(), String> {
     let cli = Cli::parse();
     match cli.command {
+        Command::Init {
+            manifest_dir,
+            force,
+            check,
+        } => {
+            let outcome = commands::init::run(commands::init::InitArgs {
+                manifest_dir,
+                force,
+                check,
+            })?;
+            println!("project_kind={}", outcome.project_kind);
+            for file in outcome.created_files {
+                println!("created={}", file.display());
+            }
+            for file in outcome.skipped_files {
+                println!("skipped={}", file.display());
+            }
+            for line in outcome.checks {
+                println!("check={}", line);
+            }
+            Ok(())
+        }
         Command::Keygen => {
             let output = commands::keygen::run()?;
             println!("public_key={}", output.public_key_hex);
