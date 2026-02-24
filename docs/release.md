@@ -163,7 +163,7 @@ Initialize linker wrappers once:
 cargo run -p xforge-cli -- init --manifest-dir .
 ```
 
-This creates `.cargo/config.toml` and `scripts/xforge-android-linker.sh` wrappers that auto-detect NDK locations (`XFORGE_ANDROID_NDK`, `ANDROID_NDK_HOME`, `ANDROID_SDK_ROOT`) and use `XFORGE_ANDROID_API` (default `23`) for Clang selection.
+This creates `.cargo/config.toml` and `scripts/xforge-android-linker.sh` wrappers that auto-detect NDK locations (`XFORGE_ANDROID_NDK`, `ANDROID_NDK_HOME`, `ANDROID_NDK_ROOT`, `ANDROID_SDK_ROOT`, `ANDROID_HOME`) and use `XFORGE_ANDROID_API` (default `23`) for Clang selection.
 
 Then build Android targets normally (for example, `cargo build --target=aarch64-linux-android`) before running `xforge bundle`. `bundle` still reads built libraries from `target/<triple>/<profile>`.
 
