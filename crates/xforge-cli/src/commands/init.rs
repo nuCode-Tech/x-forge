@@ -269,13 +269,43 @@ fn detect_android_ndk_root() -> Option<PathBuf> {
 }
 
 fn latest_ndk_under(path: PathBuf) -> Option<PathBuf> {
+    fn ndk_dir_version(path: &Path) -> Option<Vec<u32>> {
+        let name = path.file_name()?.to_str()?;
+        let parts: Vec<u32> = name
+            .split('.')
+            .filter_map(|part| part.parse::<u32>().ok())
+            .collect();
+        if parts.is_empty() {
+            None
+        } else {
+            Some(parts)
+        }
+    }
+
     let entries = fs::read_dir(&path).ok()?;
     let mut directories: Vec<PathBuf> = entries
         .flatten()
         .map(|entry| entry.path())
         .filter(|entry| entry.is_dir())
         .collect();
-    directories.sort();
+
+    use std::cmp::Ordering;
+
+    directories.sort_by(|a, b| {
+        match (ndk_dir_version(a), ndk_dir_version(b)) {
+            (Some(va), Some(vb)) => {
+                for (pa, pb) in va.iter().zip(vb.iter()) {
+                    if pa != pb {
+                        return pa.cmp(pb);
+                    }
+                }
+                va.len().cmp(&vb.len())
+            }
+            (Some(_), None) => Ordering::Greater,
+            (None, Some(_)) => Ordering::Less,
+            (None, None) => a.cmp(b),
+        }
+    });
     directories.pop()
 }
 
