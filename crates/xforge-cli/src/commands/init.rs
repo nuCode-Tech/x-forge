@@ -95,11 +95,8 @@ fn init_rust_project(args: InitArgs, project_kind: ProjectKind) -> Result<InitOu
     let mut skipped_files = Vec::new();
 
     let rust_toolchain_path = args.manifest_dir.join("rust-toolchain.toml");
-    let host_target = rustc_host_triple().unwrap_or_else(|| "x86_64-unknown-linux-gnu".to_string());
-    let rust_toolchain_contents = format!(
-        "[toolchain]\nchannel = \"stable\"\ntargets = [\"{}\"]\ncomponents = [\"rustfmt\", \"clippy\"]\n",
-        host_target
-    );
+    let host_target = rustc_host_triple().or_else(compile_time_host_triple);
+    let rust_toolchain_contents = rust_toolchain_template(host_target.as_deref());
     write_file(
         &rust_toolchain_path,
         &rust_toolchain_contents,
@@ -384,6 +381,43 @@ fn rustc_host_triple() -> Option<String> {
     None
 }
 
+fn compile_time_host_triple() -> Option<String> {
+    if let Some(target) = option_env!("TARGET") {
+        return Some(target.to_string());
+    }
+
+    if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
+        return Some("aarch64-apple-darwin".to_string());
+    }
+    if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+        return Some("x86_64-apple-darwin".to_string());
+    }
+    if cfg!(all(target_os = "windows", target_arch = "aarch64", target_env = "msvc")) {
+        return Some("aarch64-pc-windows-msvc".to_string());
+    }
+    if cfg!(all(target_os = "windows", target_arch = "x86_64", target_env = "msvc")) {
+        return Some("x86_64-pc-windows-msvc".to_string());
+    }
+    if cfg!(all(target_os = "linux", target_arch = "aarch64", target_env = "gnu")) {
+        return Some("aarch64-unknown-linux-gnu".to_string());
+    }
+    if cfg!(all(target_os = "linux", target_arch = "x86_64", target_env = "gnu")) {
+        return Some("x86_64-unknown-linux-gnu".to_string());
+    }
+
+    None
+}
+
+fn rust_toolchain_template(host_target: Option<&str>) -> String {
+    match host_target {
+        Some(target) => format!(
+            "[toolchain]\nchannel = \"stable\"\ntargets = [\"{}\"]\ncomponents = [\"rustfmt\", \"clippy\"]\n",
+            target
+        ),
+        None => "[toolchain]\nchannel = \"stable\"\n# targets = [\"<host-target-triple>\"]\ncomponents = [\"rustfmt\", \"clippy\"]\n".to_string(),
+    }
+}
+
 fn cargo_config_template() -> &'static str {
     "[target.aarch64-linux-android]\nlinker = \"./scripts/xforge-link-aarch64-linux-android.sh\"\n\n[target.armv7-linux-androideabi]\nlinker = \"./scripts/xforge-link-armv7-linux-androideabi.sh\"\n\n[target.x86_64-linux-android]\nlinker = \"./scripts/xforge-link-x86_64-linux-android.sh\"\n"
 }
@@ -493,5 +527,17 @@ mod tests {
         assert_eq!(outcome.project_kind, "rust");
         assert!(outcome.created_files.is_empty());
         assert!(outcome.checks.iter().any(|line| line.contains(".cargo/config.toml: missing")));
+    }
+
+    #[test]
+    fn rust_toolchain_template_includes_targets_when_available() {
+        let rendered = rust_toolchain_template(Some("aarch64-apple-darwin"));
+        assert!(rendered.contains("targets = [\"aarch64-apple-darwin\"]"));
+    }
+
+    #[test]
+    fn rust_toolchain_template_uses_placeholder_when_target_unknown() {
+        let rendered = rust_toolchain_template(None);
+        assert!(rendered.contains("# targets = [\"<host-target-triple>\"]"));
     }
 }
