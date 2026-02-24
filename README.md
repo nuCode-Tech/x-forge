@@ -42,7 +42,6 @@ For Android builds, init creates `.cargo/config.toml` linker mappings that auto-
 
 XForge bundles shared objects (`.so`, `.dylib`, `.dll`) for adapters to use. Your crate must produce a shared library:
 
-- **Linux/Android**: configure `[lib] crate-type = ["cdylib"]` in `Cargo.toml`.
-- **macOS/iOS**: configure `[lib] crate-type = ["cdylib"]` in `Cargo.toml`.
-- **Windows**: configure `[lib] crate-type = ["cdylib"]` in `Cargo.toml`.
+- **Linux/Android, macOS/iOS, Windows**: configure `[lib] crate-type = ["cdylib"]` in `Cargo.toml`.
+  
   
