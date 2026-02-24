@@ -54,9 +54,6 @@ precompiled_binaries:
 channel = "stable"
 targets = ["x86_64-unknown-linux-gnu", "aarch64-apple-darwin"]
 components = ["rustfmt", "clippy"]
-
-[lib]
-crate-type = ["cdylib"]
 ```
 
 - `repository` is required and normalized to `owner/repo` (GitHub/GitHub-compatible hosts).
