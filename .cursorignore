@@ -1,0 +1,9 @@
+target/
+**/target/
+
+.gradle/
+**/.dart_tool/
+**/dist/
+**/node_modules/
+
+.DS_Store
