@@ -4,12 +4,14 @@
 
 ## Deterministic release loop
 
-1. `xforge build` compiles a single Rust target with Cargo/Cross/Zigbuild, computes the `build_id`, and exposes where the shared library landed. Target triples (see `crates/xforge-core/src/platform/key.rs`) drive ABI identity so the same inputs always hash to the same release ID.
-2. `xforge bundle` packages every configured target directory into archives, writes `xforge-manifest.json`, and records `build_id.txt`. The CLI relies on `xforge-pack` to emit tar/zip archives whose names include the `build_id` and target.
-3. `xforge publish` signs the manifest and artifacts, then creates or reuses a GitHub release tagged with the `build_id`. `xforge publish` uploads each signed asset only once, so repeated runs are safe, and it automatically reads `precompiled_binaries.repository` from `xforge.yaml` when `--repository` is omitted. See `docs/release.md` for the end-to-end checklist.
+1. **Initialize** with `xforge init` to scaffold `rust-toolchain.toml`, `.cargo/config.toml` (with Android linker mappings), and helper scripts. Detect project type automatically (Rust or Dart plugin) and validate with `--check`.
+2. **Build** with `xforge build [--target <triple>]` or `cargo build --target <triple>` for each configured target. Shared libraries are produced under `target/<triple>/<profile>/` if your crate is configured with `crate-type = ["cdylib"]`.
+3. **Bundle** with `xforge bundle` to package every target's built libraries into archives (tar.gz/zip), write `xforge-manifest.json` with the deterministic `build_id`, and emit `build_id.txt`. The manifest is content-addressed and enforced by `xforge-core`.
+4. **Publish** with `xforge publish` to sign the manifest and artifacts, then create or update a GitHub release tagged with the `build_id`. `xforge publish` uploads each signed asset only once, so repeated runs are safe. See `docs/release.md` for the end-to-end checklist.
 
 ## CLI reference
 
+- `xforge init [--manifest-dir <path>] [--force] [--check]` — auto-detect project type and scaffold or validate config. Rust crates get `rust-toolchain.toml`, `.cargo/config.toml`, and Android linker scripts (`scripts/xforge-*.sh`) that auto-detect the NDK from `XFORGE_ANDROID_NDK`, `ANDROID_NDK_HOME`, or SDK locations. Dart plugin directories (`pubspec.yaml`) get an `xforge.yaml` precompiled-binaries template. `--check` validates setup without writing files.
 - `xforge keygen` — produce a new Ed25519 pair (`public_key` for manifests, `private_key` for publishing).
 - `xforge build [--target <triple>] [--profile <name>] [--executor cargo|cross|zigbuild] [--cross-image <image>]` — compile a single target; defaults to the first entry in `rust-toolchain.toml`. Prints `build_id` and the built library path.
 - `xforge bundle [--target <triple>] [--profile release] [--output-dir dist]` — package the existing build output for every configured target, write `xforge-manifest.json`, and emit `build_id.txt`. It assumes the appropriate libraries already exist under `target/<triple>/<profile>`. The manifest and archives live in `--output-dir` (defaults to `dist`).
@@ -32,6 +34,8 @@ x-forge/
 ## Configuration & schemas
 
 `rust-toolchain.toml` declares the Rust channel, targets, and components that XForge uses when building. `xforge.yaml` sits beside `Cargo.toml` and only declares the `precompiled_binaries` block that adapters consume. See `docs/configuring-targets.md` for the schema-driven guidance and `schemas/config.schema.json` for the authoritative JSON schema. The manifest emitted by `xforge bundle` conforms to `schemas/manifest.schema.json`, so adapters can download artifacts with confidence.
+
+For Android Rust targets, `xforge init` also creates linker wrapper scripts and a `.cargo/config.toml` mapping for `aarch64-linux-android`, `armv7-linux-androideabi`, and `x86_64-linux-android`. This avoids hard-coding NDK paths while keeping Cargo builds reproducible.
 
 ## Language adapters
 

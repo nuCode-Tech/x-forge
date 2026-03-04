@@ -12,3 +12,4 @@ examples/uniffi-xforge/dart/.dart_tool/
 examples/uniffi-xforge/dist/
 .DS_Store
 
+tmp/

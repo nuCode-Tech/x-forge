@@ -4,6 +4,14 @@ XForge reads `rust-toolchain.toml` to decide which targets to build, which chann
 
 ## Declare defaults in `rust-toolchain.toml`
 
+You can scaffold defaults with:
+
+```bash
+xforge init --manifest-dir .
+```
+
+That command writes `rust-toolchain.toml` for Rust crates and skips existing files unless `--force` is set. Validate the setup with `--check` to verify config and linker scripts are present.
+
 Create a `rust-toolchain.toml` with a `[toolchain]` section so `xforge build` and `xforge bundle` know what to build/package. The CLI will iterate through this list, hash each target's inputs, and include the triples in the manifest.
 
 ```toml
@@ -49,3 +57,23 @@ See `docs/release.md` for the full release flow (bundle, sign, publish) that rel
 ## Missing `rust-toolchain.toml`
 
 `xforge build` and `xforge bundle` require a `rust-toolchain.toml` in the crate directory or repo root. If the file is missing or the required fields are absent, the CLI exits with a configuration error.
+
+## Shared library output (cdylib)
+
+XForge bundles rely on shared objects (`.so`, `.dylib`, `.dll`). Ensure your Rust crate is configured to produce them:
+
+```toml
+[lib]
+crate-type = ["cdylib"]
+```
+
+Without this, `cargo build --target <triple>` will produce only `.rlib` (static) or metadata formats, which `xforge bundle` cannot package. If you want both static and dynamic libraries, use `crate-type = ["cdylib", "rlib"]`.
+
+## Android linker helpers
+
+When you run `xforge init` in a Rust crate, it also creates:
+
+- `.cargo/config.toml` target linker entries for `aarch64-linux-android`, `armv7-linux-androideabi`, and `x86_64-linux-android`
+- `scripts/xforge-android-linker.sh` plus per-target wrapper scripts
+
+The linker script auto-detects the NDK from `XFORGE_ANDROID_NDK`, `ANDROID_NDK_HOME`, `ANDROID_NDK_ROOT`, or SDK install directories and uses `XFORGE_ANDROID_API` (default `23`) to select the correct Clang driver.
