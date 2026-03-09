@@ -14,6 +14,7 @@ pub enum PlatformKey {
     IosSimulatorX86_64,
     AndroidArm64,
     AndroidArmv7,
+    AndroidX86,
     AndroidX86_64,
     WindowsX86_64Msvc,
     WindowsArm64Msvc,
@@ -129,6 +130,7 @@ const SUPPORTED_BINDINGS: &[BindingLanguage] = &[
 
 const ANDROID_RUST_TARGETS_ARM64: &[&str] = &["aarch64-linux-android"];
 const ANDROID_RUST_TARGETS_ARMV7: &[&str] = &["armv7-linux-androideabi"];
+const ANDROID_RUST_TARGETS_X86: &[&str] = &["i686-linux-android"];
 const ANDROID_RUST_TARGETS_X86_64: &[&str] = &["x86_64-linux-android"];
 const IOS_RUST_TARGETS_DEVICE: &[&str] = &["aarch64-apple-ios"];
 const IOS_RUST_TARGETS_SIMULATOR_ARM64: &[&str] = &["aarch64-apple-ios-sim"];
@@ -215,6 +217,13 @@ static PLATFORM_REGISTRY: &[PlatformDescriptor] = &[
         key: PlatformKey::AndroidArmv7,
         key_str: "armv7-linux-androideabi",
         rust_targets: ANDROID_RUST_TARGETS_ARMV7,
+        packaging: DEFAULT_ANDROID_PACKAGING,
+        bindings: DEFAULT_BINDINGS,
+    },
+    PlatformDescriptor {
+        key: PlatformKey::AndroidX86,
+        key_str: "i686-linux-android",
+        rust_targets: ANDROID_RUST_TARGETS_X86,
         packaging: DEFAULT_ANDROID_PACKAGING,
         bindings: DEFAULT_BINDINGS,
     },
