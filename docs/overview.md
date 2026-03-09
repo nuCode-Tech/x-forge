@@ -35,7 +35,7 @@ x-forge/
 
 `rust-toolchain.toml` declares the Rust channel, targets, and components that XForge uses when building. `xforge.yaml` sits beside `Cargo.toml` and only declares the `precompiled_binaries` block that adapters consume. See `docs/configuring-targets.md` for the schema-driven guidance and `schemas/config.schema.json` for the authoritative JSON schema. The manifest emitted by `xforge bundle` conforms to `schemas/manifest.schema.json`, so adapters can download artifacts with confidence.
 
-For Android Rust targets, `xforge init` also creates linker wrapper scripts and a `.cargo/config.toml` mapping for `aarch64-linux-android`, `armv7-linux-androideabi`, and `x86_64-linux-android`. This avoids hard-coding NDK paths while keeping Cargo builds reproducible.
+For Android Rust targets, `xforge init` also creates linker wrapper scripts and a `.cargo/config.toml` mapping for `aarch64-linux-android`, `armv7-linux-androideabi`, `i686-linux-android`, and `x86_64-linux-android`. This avoids hard-coding NDK paths while keeping Cargo builds reproducible.
 
 ## Language adapters
 

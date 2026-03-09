@@ -73,7 +73,7 @@ Without this, `cargo build --target <triple>` will produce only `.rlib` (static)
 
 When you run `xforge init` in a Rust crate, it also creates:
 
-- `.cargo/config.toml` target linker entries for `aarch64-linux-android`, `armv7-linux-androideabi`, and `x86_64-linux-android`
+- `.cargo/config.toml` target linker entries for `aarch64-linux-android`, `armv7-linux-androideabi`, `i686-linux-android`, and `x86_64-linux-android`
 - `scripts/xforge-android-linker.sh` plus per-target wrapper scripts
 
 The linker script auto-detects the NDK from `XFORGE_ANDROID_NDK`, `ANDROID_NDK_HOME`, `ANDROID_NDK_ROOT`, or SDK install directories and uses `XFORGE_ANDROID_API` (default `23`) to select the correct Clang driver.

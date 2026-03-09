@@ -175,6 +175,7 @@ fn android_abi(platform: PlatformKey) -> Result<&'static str, PackError> {
     match platform {
         PlatformKey::AndroidArm64 => Ok("arm64-v8a"),
         PlatformKey::AndroidArmv7 => Ok("armeabi-v7a"),
+        PlatformKey::AndroidX86 => Ok("x86"),
         PlatformKey::AndroidX86_64 => Ok("x86_64"),
         _ => Err(PackError::InvalidRequest {
             message: format!("non-android platform '{}'", platform),

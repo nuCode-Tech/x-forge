@@ -142,6 +142,14 @@ fn init_rust_project(args: InitArgs, project_kind: ProjectKind) -> Result<InitOu
         &mut skipped_files,
     )?;
     write_file(
+        &scripts_dir.join("xforge-link-i686-linux-android.sh"),
+        &android_link_wrapper_template("i686-linux-android"),
+        args.force,
+        true,
+        &mut created_files,
+        &mut skipped_files,
+    )?;
+    write_file(
         &scripts_dir.join("xforge-link-x86_64-linux-android.sh"),
         &android_link_wrapper_template("x86_64-linux-android"),
         args.force,
@@ -217,6 +225,7 @@ fn check_rust_project(manifest_dir: &Path) -> Result<Vec<String>, String> {
         "xforge-android-linker.sh",
         "xforge-link-aarch64-linux-android.sh",
         "xforge-link-armv7-linux-androideabi.sh",
+        "xforge-link-i686-linux-android.sh",
         "xforge-link-x86_64-linux-android.sh",
     ] {
         let path = script_root.join(script);
@@ -419,7 +428,7 @@ fn rust_toolchain_template(host_target: Option<&str>) -> String {
 }
 
 fn cargo_config_template() -> &'static str {
-    "[target.aarch64-linux-android]\nlinker = \"./scripts/xforge-link-aarch64-linux-android.sh\"\n\n[target.armv7-linux-androideabi]\nlinker = \"./scripts/xforge-link-armv7-linux-androideabi.sh\"\n\n[target.x86_64-linux-android]\nlinker = \"./scripts/xforge-link-x86_64-linux-android.sh\"\n"
+    "[target.aarch64-linux-android]\nlinker = \"./scripts/xforge-link-aarch64-linux-android.sh\"\n\n[target.armv7-linux-androideabi]\nlinker = \"./scripts/xforge-link-armv7-linux-androideabi.sh\"\n\n[target.i686-linux-android]\nlinker = \"./scripts/xforge-link-i686-linux-android.sh\"\n\n[target.x86_64-linux-android]\nlinker = \"./scripts/xforge-link-x86_64-linux-android.sh\"\n"
 }
 
 fn android_link_wrapper_template(target: &str) -> String {
@@ -430,7 +439,7 @@ fn android_link_wrapper_template(target: &str) -> String {
 }
 
 fn android_linker_script_template() -> &'static str {
-    "#!/usr/bin/env bash\nset -euo pipefail\n\nif [[ $# -lt 1 ]]; then\n  echo \"usage: xforge-android-linker.sh <rust-target-triple> [clang args...]\" >&2\n  exit 2\nfi\n\ntarget=\"$1\"\nshift\napi=\"${XFORGE_ANDROID_API:-23}\"\n\npick_latest_ndk() {\n  local base=\"$1\"\n  if [[ ! -d \"$base\" ]]; then\n    return 1\n  fi\n  ls -1 \"$base\" 2>/dev/null | sort -V | tail -n 1\n}\n\nresolve_ndk_root() {\n  local ndk_home=\"${XFORGE_ANDROID_NDK:-${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}}\"\n  if [[ -n \"$ndk_home\" && -d \"$ndk_home\" ]]; then\n    echo \"$ndk_home\"\n    return 0\n  fi\n\n  local sdk_root=\"${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}\"\n  if [[ -n \"$sdk_root\" ]]; then\n    local latest\n    latest=\"$(pick_latest_ndk \"$sdk_root/ndk\")\" || true\n    if [[ -n \"$latest\" ]]; then\n      echo \"$sdk_root/ndk/$latest\"\n      return 0\n    fi\n  fi\n\n  local mac_sdk=\"$HOME/Library/Android/sdk\"\n  local linux_sdk=\"$HOME/Android/Sdk\"\n  local latest\n\n  latest=\"$(pick_latest_ndk \"$mac_sdk/ndk\")\" || true\n  if [[ -n \"$latest\" ]]; then\n    echo \"$mac_sdk/ndk/$latest\"\n    return 0\n  fi\n\n  latest=\"$(pick_latest_ndk \"$linux_sdk/ndk\")\" || true\n  if [[ -n \"$latest\" ]]; then\n    echo \"$linux_sdk/ndk/$latest\"\n    return 0\n  fi\n\n  echo \"unable to locate Android NDK. Set XFORGE_ANDROID_NDK, ANDROID_NDK_HOME, or ANDROID_SDK_ROOT.\" >&2\n  return 1\n}\n\nresolve_host_tag() {\n  local toolchains=\"$1/toolchains/llvm/prebuilt\"\n  local tag\n  for tag in darwin-x86_64 darwin-arm64 linux-x86_64 windows-x86_64; do\n    if [[ -d \"$toolchains/$tag/bin\" ]]; then\n      echo \"$tag\"\n      return 0\n    fi\n  done\n  echo \"unable to find NDK prebuilt host toolchain under $toolchains\" >&2\n  return 1\n}\n\nresolve_linker_binary() {\n  case \"$target\" in\n    aarch64-linux-android) echo \"aarch64-linux-android${api}-clang\" ;;\n    armv7-linux-androideabi) echo \"armv7a-linux-androideabi${api}-clang\" ;;\n    x86_64-linux-android) echo \"x86_64-linux-android${api}-clang\" ;;\n    *)\n      echo \"unsupported Android target '$target'\" >&2\n      return 1\n      ;;\n  esac\n}\n\nndk_root=\"$(resolve_ndk_root)\"\nhost_tag=\"$(resolve_host_tag \"$ndk_root\")\"\nlinker_bin=\"$(resolve_linker_binary)\"\nlinker=\"$ndk_root/toolchains/llvm/prebuilt/$host_tag/bin/$linker_bin\"\n\nif [[ ! -f \"$linker\" ]]; then\n  echo \"Android linker not found: $linker\" >&2\n  echo \"Check XFORGE_ANDROID_API (current: $api) and installed NDK version.\" >&2\n  exit 1\nfi\n\nexec \"$linker\" \"$@\"\n"
+    "#!/usr/bin/env bash\nset -euo pipefail\n\nif [[ $# -lt 1 ]]; then\n  echo \"usage: xforge-android-linker.sh <rust-target-triple> [clang args...]\" >&2\n  exit 2\nfi\n\ntarget=\"$1\"\nshift\napi=\"${XFORGE_ANDROID_API:-23}\"\n\npick_latest_ndk() {\n  local base=\"$1\"\n  if [[ ! -d \"$base\" ]]; then\n    return 1\n  fi\n  ls -1 \"$base\" 2>/dev/null | sort -V | tail -n 1\n}\n\nresolve_ndk_root() {\n  local ndk_home=\"${XFORGE_ANDROID_NDK:-${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}}\"\n  if [[ -n \"$ndk_home\" && -d \"$ndk_home\" ]]; then\n    echo \"$ndk_home\"\n    return 0\n  fi\n\n  local sdk_root=\"${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}\"\n  if [[ -n \"$sdk_root\" ]]; then\n    local latest\n    latest=\"$(pick_latest_ndk \"$sdk_root/ndk\")\" || true\n    if [[ -n \"$latest\" ]]; then\n      echo \"$sdk_root/ndk/$latest\"\n      return 0\n    fi\n  fi\n\n  local mac_sdk=\"$HOME/Library/Android/sdk\"\n  local linux_sdk=\"$HOME/Android/Sdk\"\n  local latest\n\n  latest=\"$(pick_latest_ndk \"$mac_sdk/ndk\")\" || true\n  if [[ -n \"$latest\" ]]; then\n    echo \"$mac_sdk/ndk/$latest\"\n    return 0\n  fi\n\n  latest=\"$(pick_latest_ndk \"$linux_sdk/ndk\")\" || true\n  if [[ -n \"$latest\" ]]; then\n    echo \"$linux_sdk/ndk/$latest\"\n    return 0\n  fi\n\n  echo \"unable to locate Android NDK. Set XFORGE_ANDROID_NDK, ANDROID_NDK_HOME, or ANDROID_SDK_ROOT.\" >&2\n  return 1\n}\n\nresolve_host_tag() {\n  local toolchains=\"$1/toolchains/llvm/prebuilt\"\n  local tag\n  for tag in darwin-x86_64 darwin-arm64 linux-x86_64 windows-x86_64; do\n    if [[ -d \"$toolchains/$tag/bin\" ]]; then\n      echo \"$tag\"\n      return 0\n    fi\n  done\n  echo \"unable to find NDK prebuilt host toolchain under $toolchains\" >&2\n  return 1\n}\n\nresolve_linker_binary() {\n  case \"$target\" in\n    aarch64-linux-android) echo \"aarch64-linux-android${api}-clang\" ;;\n    armv7-linux-androideabi) echo \"armv7a-linux-androideabi${api}-clang\" ;;\n    i686-linux-android) echo \"i686-linux-android${api}-clang\" ;;\n    x86_64-linux-android) echo \"x86_64-linux-android${api}-clang\" ;;\n    *)\n      echo \"unsupported Android target '$target'\" >&2\n      return 1\n      ;;\n  esac\n}\n\nndk_root=\"$(resolve_ndk_root)\"\nhost_tag=\"$(resolve_host_tag \"$ndk_root\")\"\nlinker_bin=\"$(resolve_linker_binary)\"\nlinker=\"$ndk_root/toolchains/llvm/prebuilt/$host_tag/bin/$linker_bin\"\n\nif [[ ! -f \"$linker\" ]]; then\n  echo \"Android linker not found: $linker\" >&2\n  echo \"Check XFORGE_ANDROID_API (current: $api) and installed NDK version.\" >&2\n  exit 1\nfi\n\nexec \"$linker\" \"$@\"\n"
 }
 
 #[cfg(test)]
@@ -462,10 +471,11 @@ mod tests {
         assert!(dir.join("rust-toolchain.toml").exists());
         assert!(dir.join(".cargo/config.toml").exists());
         assert!(dir.join("scripts/xforge-android-linker.sh").exists());
+        assert!(dir.join("scripts/xforge-link-i686-linux-android.sh").exists());
         assert!(
             fs::read_to_string(dir.join(".cargo/config.toml"))
                 .expect("read config")
-                .contains("xforge-link-aarch64-linux-android.sh")
+            .contains("xforge-link-i686-linux-android.sh")
         );
     }
 

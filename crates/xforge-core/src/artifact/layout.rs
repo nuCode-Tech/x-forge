@@ -70,7 +70,10 @@ pub fn layout_variant(platform_key: &PlatformKey) -> LayoutVariant {
 fn is_android(platform_key: &PlatformKey) -> bool {
     matches!(
         platform_key,
-        PlatformKey::AndroidArm64 | PlatformKey::AndroidArmv7 | PlatformKey::AndroidX86_64
+        PlatformKey::AndroidArm64
+            | PlatformKey::AndroidArmv7
+            | PlatformKey::AndroidX86
+            | PlatformKey::AndroidX86_64
     )
 }
 

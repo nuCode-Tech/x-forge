@@ -16,9 +16,12 @@ String detectHostTargetTriple() {
           ? 'aarch64-pc-windows-msvc'
           : 'x86_64-pc-windows-msvc';
     case 'android':
-      return arch == 'aarch64'
-          ? 'aarch64-linux-android'
-          : 'x86_64-linux-android';
+      return switch (arch) {
+        'aarch64' => 'aarch64-linux-android',
+        'arm' => 'armv7-linux-androideabi',
+        'x86' => 'i686-linux-android',
+        _ => 'x86_64-linux-android',
+      };
     case 'ios':
       return arch == 'aarch64'
           ? 'aarch64-apple-ios'
