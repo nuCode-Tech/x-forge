@@ -6,10 +6,9 @@ from __future__ import annotations
 import logging
 import os
 import tarfile
+import zipfile
 from pathlib import Path
 from typing import Callable
-
-_log = logging.getLogger("xforge.resolver")
 
 from xforge.artifacts_provider import (
     PrecompiledArtifactsProvider,
@@ -17,7 +16,8 @@ from xforge.artifacts_provider import (
 from xforge.crate_hash import compute_release_hash
 from xforge.options import PrecompiledBinaryMode, XforgeOptions
 from xforge.target import detect_host_target_triple
-import zipfile
+
+_log = logging.getLogger("xforge.resolver")
 
 
 def _library_extension_for_target(target: str) -> str:
@@ -44,34 +44,30 @@ def _extract_library_from_archive(
     cache_root = crate_dir / ".xforge" / "extracted" / build_id / target_triple
     cache_root.mkdir(parents=True, exist_ok=True)
 
-    # Check for existing extracted library
     for f in cache_root.iterdir():
         if f.is_file() and f.suffix == ext:
             return f
 
-    # Extract archive and find library
     if archive_path.suffix == ".zip":
         with zipfile.ZipFile(archive_path, "r") as zf:
             entry = _select_library_entry(zf, ext)
-        if entry is None:
-            raise ValueError(
-                f'No library with extension "{ext}" found in {archive_path}'
-            )
-        out_path = cache_root / Path(entry).name
-        with zipfile.ZipFile(archive_path, "r") as zf:
+            if entry is None:
+                raise ValueError(
+                    f'No library with extension "{ext}" found in {archive_path}'
+                )
+            out_path = cache_root / Path(entry).name
             data = zf.read(entry)
         out_path.write_bytes(data)
     elif archive_path.suffix == ".gz" or ".tar.gz" in archive_path.name:
         with tarfile.open(archive_path, "r:*") as tf:
             entry = _select_library_entry_tar(tf, ext)
-        if entry is None:
-            raise ValueError(
-                f'No library with extension "{ext}" found in {archive_path}'
-            )
-        out_path = cache_root / Path(entry).name
-        with tarfile.open(archive_path, "r:*") as tf:
+            if entry is None:
+                raise ValueError(
+                    f'No library with extension "{ext}" found in {archive_path}'
+                )
+            out_path = cache_root / Path(entry).name
             for m in tf.getmembers():
-                if m.name == entry or m.name.endswith(entry) or Path(m.name).name == Path(entry).name:
+                if Path(m.name).name == Path(entry).name:
                     f = tf.extractfile(m)
                     out_path.write_bytes(f.read() if f else b"")
                     break
@@ -199,8 +195,8 @@ def get_library_path(
     crate_dir: str | Path,
     target: str | None = None,
     *,
-        mode: PrecompiledBinaryMode | None = None,
-        fallback_builder: Callable[[Path, str], Path] | None = None,
+    mode: PrecompiledBinaryMode | None = None,
+    fallback_builder: Callable[[Path, str], Path] | None = None,
 ) -> Path:
     """
     Resolve and return the path to the precompiled native library.
@@ -218,7 +214,7 @@ def load_native_library(
     target: str | None = None,
     *,
     mode: PrecompiledBinaryMode | None = None,
-    fallback_builder: callable | None = None,
+    fallback_builder: Callable[[Path, str], Path] | None = None,
 ):
     """
     Resolve the library and return a ctypes.CDLL (or compatible) handle.
