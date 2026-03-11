@@ -36,7 +36,8 @@ x-forge/
 ## Language adapters
 
 - `adapters/dart` (`xforge_dart`) — runtime builder + CLI for Flutter/Dart consumers. It exposes `PrecompiledBuilder` for `code_assets`, downloads signed artifacts by reading `xforge.yaml`, computes the same `build_id` as the CLI (including `rust-toolchain.toml`), verifies every manifest/artifact signature, and falls back to a local build depending on `precompiled_binaries.mode`. The companion CLI (`dart run xforge_dart validate-precompiled [--crate-dir …] [--build-id …] [--target …]`) confirms a release can be downloaded and verified.
-- `adapters/gradle`, `adapters/swift`, `adapters/python` — directories are reserved for future Kotlin/Gradle, Swift (SPM/CocoaPods), and Python adapters; they currently contain stubs.
+- `adapters/python` (`xforge-python`) — Python adapter that mirrors the Dart flow: reads `xforge.yaml`, computes `build_id` (same algorithm as the CLI), downloads and verifies signed manifest/artifacts, and exposes `get_library_path` / `load_native_library` for generated bindings. CLI: `xforge keygen`, `xforge validate-precompiled`. See `adapters/python/README.md` for integration.
+- `adapters/gradle`, `adapters/swift` — reserved for future Kotlin/Gradle and Swift (SPM/CocoaPods) adapters; currently README-only stubs.
 
 ## Additional docs
 
