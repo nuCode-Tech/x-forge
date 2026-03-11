@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from xforge.loader import load_or_raise
+from xforge.precompiled.loader import load_or_raise
 
 
 def _make_mock_lib():
@@ -42,7 +42,7 @@ def test_resolver_success_loads_library(tmp_path):
     mock_resolver = MagicMock()
     mock_resolver.resolve.return_value = lib_file
 
-    with patch("xforge.loader.PrecompiledResolver", return_value=mock_resolver), \
+    with patch("xforge.precompiled.loader.PrecompiledResolver", return_value=mock_resolver), \
          patch("ctypes.CDLL", return_value=mock_lib):
         result = load_or_raise(crate_dir=str(tmp_path), crate_rel_path=".")
 
@@ -54,7 +54,7 @@ def test_resolver_failure_no_fallback_raises(tmp_path):
     mock_resolver = MagicMock()
     mock_resolver.resolve.side_effect = RuntimeError("download failed")
 
-    with patch("xforge.loader.PrecompiledResolver", return_value=mock_resolver):
+    with patch("xforge.precompiled.loader.PrecompiledResolver", return_value=mock_resolver):
         with pytest.raises(RuntimeError, match="download failed"):
             load_or_raise(crate_dir=str(tmp_path), crate_rel_path=".", fallback_builder=None)
 
@@ -69,7 +69,7 @@ def test_resolver_failure_with_fallback_calls_builder(tmp_path):
     fallback = MagicMock(return_value=lib_file)
     mock_lib = _make_mock_lib()
 
-    with patch("xforge.loader.PrecompiledResolver", return_value=mock_resolver), \
+    with patch("xforge.precompiled.loader.PrecompiledResolver", return_value=mock_resolver), \
          patch("ctypes.CDLL", return_value=mock_lib):
         result = load_or_raise(
             crate_dir=str(tmp_path),
@@ -98,7 +98,7 @@ def test_crate_rel_path_resolved_from_crate_dir(tmp_path):
     mock_resolver.resolve.return_value = lib_file
     mock_lib = _make_mock_lib()
 
-    with patch("xforge.loader.PrecompiledResolver", return_value=mock_resolver) as MockResolver, \
+    with patch("xforge.precompiled.loader.PrecompiledResolver", return_value=mock_resolver) as MockResolver, \
          patch("ctypes.CDLL", return_value=mock_lib):
         load_or_raise(crate_dir=str(caller_file), crate_rel_path="../native")
 

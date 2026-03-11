@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from xforge.cli import run_generate_loader
+from xforge.tool.commands.generate_loader import run_generate_loader
 
 
 def _make_crate(tmp_path: Path, rel: str = ".") -> Path:

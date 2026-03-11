@@ -4,7 +4,7 @@ xforge — Python adapter for XForge precompiled binaries.
 Exposes get_library_path, load_native_library, PrecompiledResolver, and helpers
 for computing build_id and loading xforge.yaml config.
 """
-from xforge.artifacts_provider import (
+from xforge.precompiled.artifacts_provider import (
     ArtifactNotFoundException,
     ArtifactResolution,
     ArtifactSignatureException,
@@ -12,15 +12,15 @@ from xforge.artifacts_provider import (
     PlatformNotFoundException,
     PrecompiledArtifactsProvider,
 )
-from xforge.crate_hash import compute_release_hash
-from xforge.options import PrecompiledBinaryMode, XforgeOptions
-from xforge.resolver import (
+from xforge.precompiled.crate_hash import compute_release_hash
+from xforge.precompiled.options import PrecompiledBinaryMode, XforgeOptions
+from xforge.precompiled.resolver import (
     get_library_path,
     load_native_library,
     PrecompiledResolver,
 )
-from xforge.loader import load_or_raise
-from xforge.target import detect_host_target_triple
+from xforge.precompiled.loader import load_or_raise
+from xforge.precompiled.target import detect_host_target_triple
 
 __all__ = [
     "ArtifactNotFoundException",
