@@ -57,9 +57,16 @@ def load_or_raise(
         if fallback_builder is not None:
             _log.warning("Resolver failed, trying fallback_builder: %s", exc)
             lib_path = fallback_builder(resolved_crate_dir, str(exc))
+            if lib_path is None or not Path(lib_path).is_file():
+                raise RuntimeError(
+                    f"fallback_builder returned an invalid path: {lib_path!r}"
+                ) from exc
         else:
             _log.error("Failed to resolve precompiled library: %s", exc)
             raise
 
     _log.info("Loading library: %s", lib_path)
-    return ctypes.CDLL(str(lib_path))
+    try:
+        return ctypes.CDLL(str(lib_path))
+    except OSError as e:
+        raise OSError(f"Failed to load native library at {lib_path}: {e}") from e
