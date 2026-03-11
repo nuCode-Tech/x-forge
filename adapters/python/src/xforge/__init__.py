@@ -19,6 +19,7 @@ from xforge.resolver import (
     load_native_library,
     PrecompiledResolver,
 )
+from xforge.loader import load_or_raise
 from xforge.target import detect_host_target_triple
 
 __all__ = [
@@ -35,4 +36,5 @@ __all__ = [
     "detect_host_target_triple",
     "get_library_path",
     "load_native_library",
+    "load_or_raise",
 ]
