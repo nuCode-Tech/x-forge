@@ -21,13 +21,13 @@ from xforge.util import hex_encode
 def main() -> None:
     argv = sys.argv[1:]
     if not argv or argv[0] in ("--help", "-h"):
-        print("xforge commands: keygen, validate-precompiled")
+        print("xforge commands: keygen, validate-precompiled, generate-loader")
         print("Run with --help for command options.")
         sys.exit(0 if argv and argv[0] in ("--help", "-h") else 2)
 
     parser = argparse.ArgumentParser(
         prog="xforge",
-        description="xforge-python CLI: keygen, validate-precompiled",
+        description="xforge-python CLI: keygen, validate-precompiled, generate-loader",
     )
     parser.add_argument(
         "command",
