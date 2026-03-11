@@ -6,4 +6,7 @@ target/
 **/dist/
 **/node_modules/
 
+adapters/python/src/__pycache__
+adapters/python/tests/__pycache__
+
 .DS_Store

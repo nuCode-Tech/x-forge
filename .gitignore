@@ -12,3 +12,8 @@ examples/uniffi-xforge/dart/.dart_tool/
 examples/uniffi-xforge/dist/
 .DS_Store
 
+
+adapters/python/src/__pycache__
+adapters/python/tests/__pycache__
+
+
